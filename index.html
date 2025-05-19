@@ -2,9 +2,10 @@
 <html lang="es">
 <head>
   <meta charset="UTF-8">
-  <title>Etiquetas QR por Factura</title>
+  <title>Generar Etiquetas QR y Descargar PDF</title>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/qrious/4.0.2/qrious.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
   <style>
     .etiqueta {
       border: 1px solid #000;
@@ -23,9 +24,12 @@
 <body>
   <h2>Subir Excel y Generar Etiquetas con QR</h2>
   <input type="file" id="input-excel" accept=".xlsx, .xls">
+  <button id="descargar-pdf">Descargar PDF</button>
   <div id="contenedor-etiquetas"></div>
 
   <script>
+    const { jsPDF } = window.jspdf;
+
     document.getElementById('input-excel').addEventListener('change', function(e) {
       const file = e.target.files[0];
       const reader = new FileReader();
@@ -38,12 +42,16 @@
         const contenedor = document.getElementById('contenedor-etiquetas');
         contenedor.innerHTML = '';
 
+        // Crear una instancia de jsPDF
+        const doc = new jsPDF();
+
         json.forEach((fila, i) => {
           const etiqueta = document.createElement('div');
           etiqueta.className = 'etiqueta';
 
           const codigoUnico = fila.FacNo || `FAC-${i + 1}`;
 
+          // Generar el QR
           const canvas = document.createElement('canvas');
           new QRious({
             element: canvas,
@@ -62,6 +70,27 @@
           `;
           etiqueta.appendChild(canvas);
           contenedor.appendChild(etiqueta);
+
+          // Añadir la etiqueta al PDF
+          doc.text(`Factura: ${fila.FacNo || 'N/A'}`, 10, 10 + (i * 40));
+          doc.text(`Cliente: ${fila["Nombre Cliente"] || ''}`, 10, 20 + (i * 40));
+          doc.text(`Dirección: ${fila.Direccion || ''}`, 10, 30 + (i * 40));
+          doc.text(`Ciudad: ${fila.Ciudad || ''}`, 10, 40 + (i * 40));
+          doc.text(`Tel: ${fila.Tel || ''}`, 10, 50 + (i * 40));
+          doc.text(`Valor: ${fila["Valor Declarado"] || ''}`, 10, 60 + (i * 40));
+          doc.text(`Código QR: ${codigoUnico}`, 10, 70 + (i * 40));
+
+          // Añadir QR
+          const qrImageData = canvas.toDataURL("image/png");
+          doc.addImage(qrImageData, 'PNG', 10, 80 + (i * 40), 50, 50);
+
+          // Cambiar página para cada nueva etiqueta (si hay más de una página de etiquetas)
+          if (i % 3 === 2) doc.addPage();
+        });
+
+        // Cuando se haga clic en el botón, generar el PDF
+        document.getElementById('descargar-pdf').addEventListener('click', () => {
+          doc.save('etiquetas.pdf');
         });
       };
       reader.readAsArrayBuffer(file);
@@ -69,4 +98,5 @@
   </script>
 </body>
 </html>
+
 
