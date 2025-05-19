@@ -56,39 +56,29 @@
           new QRious({
             element: canvas,
             value: codigoUnico,
-            size: 100
+            size: 150  // Asegúrate de que el QR sea lo suficientemente grande
           });
 
-          etiqueta.innerHTML = `
-            <p><strong>Factura:</strong> ${fila.FacNo || 'N/A'}</p>
-            <p><strong>Cliente:</strong> ${fila["Nombre Cliente"] || ''}</p>
-            <p><strong>Dirección:</strong> ${fila.Direccion || ''}</p>
-            <p><strong>Ciudad:</strong> ${fila.Ciudad || ''}</p>
-            <p><strong>Tel:</strong> ${fila.Tel || ''}</p>
-            <p><strong>Valor:</strong> ${fila["Valor Declarado"] || ''}</p>
-            <p><strong>Código QR:</strong> ${codigoUnico}</p>
-          `;
-          etiqueta.appendChild(canvas);
-          contenedor.appendChild(etiqueta);
-
-          // Añadir la etiqueta al PDF
-          doc.text(`Factura: ${fila.FacNo || 'N/A'}`, 10, 10 + (i * 40));
-          doc.text(`Cliente: ${fila["Nombre Cliente"] || ''}`, 10, 20 + (i * 40));
-          doc.text(`Dirección: ${fila.Direccion || ''}`, 10, 30 + (i * 40));
-          doc.text(`Ciudad: ${fila.Ciudad || ''}`, 10, 40 + (i * 40));
-          doc.text(`Tel: ${fila.Tel || ''}`, 10, 50 + (i * 40));
-          doc.text(`Valor: ${fila["Valor Declarado"] || ''}`, 10, 60 + (i * 40));
-          doc.text(`Código QR: ${codigoUnico}`, 10, 70 + (i * 40));
-
-          // Añadir QR
+          // Agregar el QR generado al PDF
           const qrImageData = canvas.toDataURL("image/png");
-          doc.addImage(qrImageData, 'PNG', 10, 80 + (i * 40), 50, 50);
 
-          // Cambiar página para cada nueva etiqueta (si hay más de una página de etiquetas)
+          // Añadir texto y QR al PDF
+          doc.text(`Factura: ${fila.FacNo || 'N/A'}`, 10, 10 + (i * 60));
+          doc.text(`Cliente: ${fila["Nombre Cliente"] || ''}`, 10, 20 + (i * 60));
+          doc.text(`Dirección: ${fila.Direccion || ''}`, 10, 30 + (i * 60));
+          doc.text(`Ciudad: ${fila.Ciudad || ''}`, 10, 40 + (i * 60));
+          doc.text(`Tel: ${fila.Tel || ''}`, 10, 50 + (i * 60));
+          doc.text(`Valor: ${fila["Valor Declarado"] || ''}`, 10, 60 + (i * 60));
+          doc.text(`Código QR: ${codigoUnico}`, 10, 70 + (i * 60));
+
+          // Añadir QR en el PDF
+          doc.addImage(qrImageData, 'PNG', 10, 80 + (i * 60), 50, 50);  // Tamaño ajustado para visibilidad
+
+          // Cambiar página si es necesario
           if (i % 3 === 2) doc.addPage();
         });
 
-        // Cuando se haga clic en el botón, generar el PDF
+        // Descargar el PDF cuando el usuario haga clic
         document.getElementById('descargar-pdf').addEventListener('click', () => {
           doc.save('etiquetas.pdf');
         });
@@ -98,5 +88,4 @@
   </script>
 </body>
 </html>
-
 
