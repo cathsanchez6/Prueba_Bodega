@@ -6,7 +6,7 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
   <style>
     body { font-family: Arial, sans-serif; text-align: center; padding: 20px; }
-    table { margin: 20px auto; border-collapse: collapse; width: 80%; }
+    table { margin: 20px auto; border-collapse: collapse; width: 90%; }
     th, td { border: 1px solid #ccc; padding: 8px; text-align: center; }
     input[type="text"] { width: 100%; }
   </style>
@@ -17,7 +17,7 @@
   <input type="number" id="cantidad" min="1" max="1000" value="5">
   <br><br>
   <label for="baseUrl">URL base para la landing:</label>
-  <input type="text" id="baseUrl" placeholder="https://tusitio.com/serial/">
+  <input type="text" id="baseUrl" placeholder="https://cathsanchez6.github.io/bodega2/">
   <br><br>
   <button onclick="generarSeriales()">Generar</button>
   <button onclick="descargarExcel()">Descargar Excel</button>
@@ -28,6 +28,7 @@
         <th>#</th>
         <th>Serial</th>
         <th>URL de Landing</th>
+        <th>Texto del QR</th>
       </tr>
     </thead>
     <tbody></tbody>
@@ -42,13 +43,14 @@
 
       for (let i = 0; i < cantidad; i++) {
         const serial = (100001 + i).toString();
-        const url = baseUrl ? `${baseUrl}${serial}` : "";
+        const url = baseUrl.endsWith("/") ? `${baseUrl}${serial}` : `${baseUrl}/${serial}`;
 
         const row = document.createElement("tr");
         row.innerHTML = `
           <td>${i + 1}</td>
           <td>${serial}</td>
           <td><input type="text" value="${url}" /></td>
+          <td>${url}</td>
         `;
         tbody.appendChild(row);
       }
@@ -56,19 +58,20 @@
 
     function descargarExcel() {
       const rows = document.querySelectorAll("#tablaSeriales tbody tr");
-      const data = [["#", "Serial", "URL de Landing"]];
+      const data = [["#", "Serial", "URL de Landing", "Texto del QR"]];
 
       rows.forEach(row => {
         const cols = row.querySelectorAll("td");
         const serial = cols[1].textContent;
         const url = cols[2].querySelector("input").value;
-        data.push([cols[0].textContent, serial, url]);
+        const qrText = cols[3].textContent;
+        data.push([cols[0].textContent, serial, url, qrText]);
       });
 
       const wb = XLSX.utils.book_new();
       const ws = XLSX.utils.aoa_to_sheet(data);
       XLSX.utils.book_append_sheet(wb, ws, "Seriales");
-      XLSX.writeFile(wb, "seriales_con_landing.xlsx");
+      XLSX.writeFile(wb, "seriales_con_qr.xlsx");
     }
   </script>
 </body>
