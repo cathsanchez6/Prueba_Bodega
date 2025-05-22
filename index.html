@@ -2,101 +2,29 @@
 <html lang="es">
 <head>
   <meta charset="UTF-8">
-  <title>Sistema de Inventario</title>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrious/4.0.2/qrious.min.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.0.2/firebase-app.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.0.2/firebase-database.js"></script>
+  <title>Generador de Código QR</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
   <style>
-    .producto {
-      border: 1px solid #000;
-      padding: 10px;
-      width: 300px;
-      margin: 10px;
-    }
-    .producto canvas {
-      display: block;
-      margin-top: 10px;
-    }
+    body { font-family: Arial, sans-serif; text-align: center; margin-top: 50px; }
+    #qrcode { margin-top: 20px; }
   </style>
 </head>
 <body>
-  <h2>Sistema de Inventario</h2>
-  <div id="productos"></div>
-  <br>
-  <input type="file" id="input-excel" accept=".xlsx, .xls">
-  <br><br>
-  <button id="scanQR">Escanear QR</button>
-  <br><br>
-  <div id="producto-datos"></div>
+  <h1>Generador de Código QR</h1>
+  <input type="text" id="text" placeholder="Escribe algo..." size="40">
+  <button onclick="generarQR()">Generar QR</button>
+  <div id="qrcode"></div>
 
   <script>
-    // Configurar Firebase
-    const firebaseConfig = {
-      apiKey: "YOUR_FIREBASE_API_KEY",
-      authDomain: "YOUR_PROJECT_ID.firebaseapp.com",
-      databaseURL: "https://YOUR_PROJECT_ID.firebaseio.com",
-      projectId: "YOUR_PROJECT_ID",
-      storageBucket: "YOUR_PROJECT_ID.appspot.com",
-      messagingSenderId: "YOUR_MESSAGING_SENDER_ID",
-      appId: "YOUR_APP_ID"
-    };
-    const app = firebase.initializeApp(firebaseConfig);
-    const database = firebase.database(app);
-
-    // Función para cargar los productos desde Firebase
-    function cargarProductos() {
-      const productosRef = database.ref('productos');
-      productosRef.once('value', (snapshot) => {
-        const productos = snapshot.val();
-        const contenedorProductos = document.getElementById('productos');
-        contenedorProductos.innerHTML = '';
-        for (let id in productos) {
-          const producto = productos[id];
-          const divProducto = document.createElement('div');
-          divProducto.classList.add('producto');
-          divProducto.innerHTML = `
-            <h3>${producto.nombre}</h3>
-            <p>Stock: ${producto.stock}</p>
-            <p><strong>QR:</strong></p>
-            <canvas id="qr-${id}"></canvas>
-          `;
-          contenedorProductos.appendChild(divProducto);
-
-          // Generar el QR
-          new QRious({
-            element: document.getElementById(`qr-${id}`),
-            value: producto.id,
-            size: 100
-          });
-        }
+    function generarQR() {
+      const texto = document.getElementById("text").value;
+      document.getElementById("qrcode").innerHTML = ""; // Limpiar QR anterior
+      new QRCode(document.getElementById("qrcode"), {
+        text: texto,
+        width: 200,
+        height: 200
       });
     }
-
-    // Cargar los productos cuando cargue la página
-    window.onload = cargarProductos;
-
-    // Escanear QR (simulación)
-    document.getElementById('scanQR').addEventListener('click', () => {
-      const qrEscaneado = prompt("Introduce el código QR (ID producto):");
-      if (qrEscaneado) {
-        const productosRef = database.ref('productos');
-        productosRef.once('value', (snapshot) => {
-          const productos = snapshot.val();
-          for (let id in productos) {
-            const producto = productos[id];
-            if (producto.id === qrEscaneado) {
-              const contenedorDatos = document.getElementById('producto-datos');
-              contenedorDatos.innerHTML = `
-                <h3>${producto.nombre}</h3>
-                <p>Stock: ${producto.stock}</p>
-                <p><strong>Descripción:</strong> ${producto.descripcion}</p>
-              `;
-              break;
-            }
-          }
-        });
-      }
-    });
   </script>
 </body>
 </html>
