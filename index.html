@@ -15,6 +15,10 @@
   <h1>Generador de Seriales y Excel</h1>
   <label for="cantidad">Cantidad de seriales:</label>
   <input type="number" id="cantidad" min="1" max="1000" value="5">
+  <br><br>
+  <label for="baseUrl">URL base para la landing:</label>
+  <input type="text" id="baseUrl" placeholder="https://tusitio.com/serial/">
+  <br><br>
   <button onclick="generarSeriales()">Generar</button>
   <button onclick="descargarExcel()">Descargar Excel</button>
 
@@ -32,19 +36,20 @@
   <script>
     function generarSeriales() {
       const cantidad = parseInt(document.getElementById("cantidad").value);
+      const baseUrl = document.getElementById("baseUrl").value.trim();
       const tbody = document.querySelector("#tablaSeriales tbody");
       tbody.innerHTML = "";
 
       for (let i = 0; i < cantidad; i++) {
         const serial = (100001 + i).toString();
-        const row = document.createElement("tr");
+        const url = baseUrl ? `${baseUrl}${serial}` : "";
 
+        const row = document.createElement("tr");
         row.innerHTML = `
           <td>${i + 1}</td>
           <td>${serial}</td>
-          <td><input type="text" placeholder="https://tusitio.com/landing..." /></td>
+          <td><input type="text" value="${url}" /></td>
         `;
-
         tbody.appendChild(row);
       }
     }
@@ -68,5 +73,6 @@
   </script>
 </body>
 </html>
+
 
 
