@@ -1,81 +1,87 @@
 <!DOCTYPE html>
-<html lang="es">
-<head>
-  <meta charset="UTF-8">
-  <title>Generador de Seriales y Excel</title>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
-  <style>
-    body { font-family: Arial, sans-serif; text-align: center; padding: 20px; }
-    table { margin: 20px auto; border-collapse: collapse; width: 90%; }
-    th, td { border: 1px solid #ccc; padding: 8px; text-align: center; }
-    input[type="text"] { width: 100%; }
-  </style>
-</head>
-<body>
-  <h1>Generador de Seriales y Excel</h1>
-  <label for="cantidad">Cantidad de seriales:</label>
-  <input type="number" id="cantidad" min="1" max="1000" value="5">
-  <br><br>
-  <label for="baseUrl">URL base para la landing:</label>
-  <input type="text" id="baseUrl" placeholder="https://cathsanchez6.github.io/bodega2/">
-  <br><br>
-  <button onclick="generarSeriales()">Generar</button>
-  <button onclick="descargarExcel()">Descargar Excel</button>
+<html>
+  <head>
+    <base target="_top">
+    <style>
+      body { font-family: Arial; padding: 20px; }
+      label, select, input { display: block; margin: 10px 0; }
+    </style>
+  </head>
+  <body>
+    <h2>Generador de Seriales</h2>
 
-  <table id="tablaSeriales">
-    <thead>
-      <tr>
-        <th>#</th>
-        <th>Serial</th>
-        <th>URL de Landing</th>
-        <th>Texto del QR</th>
-      </tr>
-    </thead>
-    <tbody></tbody>
-  </table>
+    <label for="ot">Selecciona una OT:</label>
+    <select id="ot" onchange="mostrarInfo()"></select>
 
-  <script>
-    function generarSeriales() {
-      const cantidad = parseInt(document.getElementById("cantidad").value);
-      const baseUrl = document.getElementById("baseUrl").value.trim();
-      const tbody = document.querySelector("#tablaSeriales tbody");
-      tbody.innerHTML = "";
+    <div id="info"></div>
 
-      for (let i = 0; i < cantidad; i++) {
-        const serial = (100001 + i).toString();
-        const url = baseUrl.endsWith("/") ? `${baseUrl}${serial}` : `${baseUrl}/${serial}`;
+    <label for="cantidad">Cantidad a entregar:</label>
+    <input type="number" id="cantidad" min="1">
 
-        const row = document.createElement("tr");
-        row.innerHTML = `
-          <td>${i + 1}</td>
-          <td>${serial}</td>
-          <td><input type="text" value="${url}" /></td>
-          <td>${url}</td>
-        `;
-        tbody.appendChild(row);
+    <button onclick="generar()">Generar Seriales</button>
+
+    <div id="resultado"></div>
+
+    <script>
+      let datosOTs = [];
+
+      function cargarOTs() {
+        google.script.run.withSuccessHandler(function(data) {
+          datosOTs = data;
+          const select = document.getElementById("ot");
+          select.innerHTML = ""; // Limpiar opciones anteriores
+          data.forEach(d => {
+            const option = document.createElement("option");
+            option.value = d.OT;
+            option.text = d.OT + " - " + d.CodProd;
+            select.appendChild(option);
+          });
+          mostrarInfo();
+        }).obtenerDatosOTs();
       }
-    }
 
-    function descargarExcel() {
-      const rows = document.querySelectorAll("#tablaSeriales tbody tr");
-      const data = [["#", "Serial", "URL de Landing", "Texto del QR"]];
+      function mostrarInfo() {
+        const otSeleccionada = document.getElementById("ot").value;
+        const info = datosOTs.find(d => d.OT == otSeleccionada);
+        if (info) {
+          document.getElementById("info").innerHTML = `
+            <strong>Producto:</strong> ${info.DescProd}<br>
+            <strong>Cantidad:</strong> ${info.Cant}<br>
+            <strong>Pendiente por Producir:</strong> ${info.Pdte}<br>
+            <strong>Unidad de Empaque:</strong> ${info.UndEmp}<br><br>
+            <label><input type="checkbox" id="chkEntrega"> Entregar</label>
+          `;
+        }
+      }
 
-      rows.forEach(row => {
-        const cols = row.querySelectorAll("td");
-        const serial = cols[1].textContent;
-        const url = cols[2].querySelector("input").value;
-        const qrText = cols[3].textContent;
-        data.push([cols[0].textContent, serial, url, qrText]);
-      });
+      function generar() {
+        const ot = document.getElementById("ot").value;
+        const cantidad = parseInt(document.getElementById("cantidad").value);
+        const entregar = document.getElementById("chkEntrega").checked;
+        const info = datosOTs.find(d => d.OT == ot);
 
-      const wb = XLSX.utils.book_new();
-      const ws = XLSX.utils.aoa_to_sheet(data);
-      XLSX.utils.book_append_sheet(wb, ws, "Seriales");
-      XLSX.writeFile(wb, "seriales_con_qr.xlsx");
-    }
+        if (!entregar) {
+          alert("Debes marcar la opción 'Entregar' para continuar.");
+          return;
+        }
 
-  </script>
-</body>
+        if (!cantidad || cantidad <= 0) {
+          alert("Ingresa una cantidad válida.");
+          return;
+        }
+
+        google.script.run.withSuccessHandler(function(seriales) {
+          document.getElementById("resultado").innerHTML = `
+            <p>✅ Se generaron ${seriales.length} seriales.</p>
+            <pre>${seriales.join("\\n")}</pre>
+          `;
+        }).generarSeriales(ot, cantidad, info.UndEmp);
+      }
+
+
+    </script>
+
+  </body>
 </html>
 
 
